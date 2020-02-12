@@ -3,7 +3,9 @@
 
 ;; (use-modules (sjson) (sjson utils))
 (use-modules (ice-9 getopt-long)
-             (ice-9 format))
+             (ice-9 format)
+             (ice-9 hash-table)
+             (ice-9 match))
 
 (define (parse-args args)
   ;; some magic because both -H and --server work
@@ -46,9 +48,9 @@ sheepdog [options]
   (let* [(port (open-file config "r"))
          (buf (read port))
          (global (cdr buf))
-         (ishost (assoc 'host global))
-         (host (cond
-                   [(list? ishost) (car (cdr ishost))]))
+         (host (match (assoc 'host global)
+                 [(host name) name]
+                 [else #f]))
          (ismail (assoc 'mailto global))
          (mailto (cond
                    [(list? ismail) (car (cdr ismail))]))
