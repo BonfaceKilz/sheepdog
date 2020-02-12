@@ -4,7 +4,7 @@
 ;; (use-modules (sjson) (sjson utils))
 (use-modules (ice-9 getopt-long))
 
-(define (main args)
+(define (parse-args args)
   ;; some magic because both -H and --server work
   (let* ((option-spec '((server  (single-char #\H) (value #t))
                         (config  (single-char #\c) (value #t))
@@ -18,9 +18,9 @@
     (if (or set-server set-config version-wanted help-wanted)
         (begin
           (if set-server
-              (display (option-ref options 'server #f)))
+              (display (string-append "server=" set-server "\n")))
           (if set-config
-              (display (string-append "config-fn=" (option-ref options 'config #f))))
+              (display (string-append "config-fn=" set-config "\n")))
           (if version-wanted
               (display "sheepdog version 0.1\n"))
           (if help-wanted
@@ -30,9 +30,15 @@ sheepdog [options]
   -H, --server     server[:port] (default localhost:6379)
   -v, --version    Display version
   -h, --help       Display this help
-")))
+"))
+          options)
         (begin
-          (display (string-append "Hello, World!" (option-ref options 'config #f))) (newline)))))
+          (display (string-append "Hello, World! " set-config)) (newline)))))
 
 (display "sheepdog\n")
-(main (command-line))
+; (let [(ops (parse-args (command-line)))])
+
+(let* [(op (parse-args (command-line)))
+       (config (option-ref op 'config #f))
+       ]
+  (display config))
