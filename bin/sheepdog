@@ -39,12 +39,11 @@ sheepdog [options]
 (let* [(op (parse-args (command-line)))
        (config (option-ref op 'config #f))
        ]
-  (display
-   (match config
-     [#f "\nERROR: Please define config file, for now!\n\n"]
-     [else (string-append "Reading " config)]))
   (match config
-    [#f (raise 2)])
+    [#f (begin
+          (display "\nERROR: Please define config file, for now!\n\n")
+          (raise 2))]
+     [else #f])
   (let* [(port (open-file config "r"))
          (buf (read port))
          (global (cdr buf))
