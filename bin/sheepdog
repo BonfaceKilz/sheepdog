@@ -41,4 +41,6 @@ sheepdog [options]
 (let* [(op (parse-args (command-line)))
        (config (option-ref op 'config #f))
        ]
-  (display config))
+  (display config)
+  (display config)
+  )
