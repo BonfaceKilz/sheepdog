@@ -9,7 +9,7 @@
 
 (define (parse-args args)
   ;; some magic because both -H and --server work
-  (let* ((option-spec '((server  (single-char #\H) (value #t))
+  (let* ((option-spec '(;; (server  (single-char #\H) (value #t))
                         (config  (single-char #\c) (value #t))
                         (version (single-char #\v) (value #f))
                         (help    (single-char #\h) (value #f))))
@@ -18,25 +18,20 @@
          (set-config (option-ref options 'config #f))
          (help-wanted (option-ref options 'help #f))
          (version-wanted (option-ref options 'version #f)))
-    (if (or set-server set-config version-wanted help-wanted)
+    (if (or set-config version-wanted help-wanted)
         (begin
-          (if set-server
-              (display (string-append "server=" set-server "\n")))
           (if set-config
-              (display (string-append "config-fn=" set-config "\n")))
+              (display (string-append "config=" set-config "\n")))
           (if version-wanted
               (display "sheepdog version 0.1\n"))
           (if help-wanted
               (display "\
 sheepdog [options]
   -c, --config     config-filename
-  -H, --server     server[:port] (default localhost:6379)
   -v, --version    Display version
   -h, --help       Display this help
 "))
-          options)
-        (begin
-          (display (string-append "Hello, World! " set-config)) (newline)))))
+          options))))
 
 (display "sheepdog\n")
 ; (let [(ops (parse-args (command-line)))])
@@ -44,7 +39,12 @@ sheepdog [options]
 (let* [(op (parse-args (command-line)))
        (config (option-ref op 'config #f))
        ]
-  (display (string-append "Reading " config))
+  (display
+   (match config
+     [#f "\nERROR: Please define config file, for now!\n\n"]
+     [else (string-append "Reading " config)]))
+  (match config
+    [#f (raise 2)])
   (let* [(port (open-file config "r"))
          (buf (read port))
          (global (cdr buf))
@@ -60,15 +60,5 @@ sheepdog [options]
                  [else #f]))
          ]
     (begin
-      (display "BUFFER:")
       (display buf)
-      (newline)
-      (display "HOST:")
-      (write rhost)
-      (display "Port:")
-      (write rport)
-      (display "Mail:")
-      (write rmailto)
-      (newline)
-      (display (format #t "~s" port))
   )))
