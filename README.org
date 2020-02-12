@@ -2,10 +2,10 @@
 
 * Sheepdog
 
-If you have a herd of machines sheepdog helps you keep sane. Sheepdog
-does not replace the likes of Nagios or Zabbix though I am happy not
-to run those systems becasuse they target (complex) deployments that
-have people watching these systems.
+A shepherd needs a sheepdog. If you have a herd of machines sheepdog
+helps you keep sane. Sheepdog does not replace the likes of Nagios or
+Zabbix though I am happy not to run those systems because they target
+(complex) deployments that have people watching these systems.
 
 NOTICE: Sheepdog software is in early stages of development. YMMV.
 
@@ -23,14 +23,14 @@ use logic programming. And allows questions like:
    machines that also runs a specific version of nginx?
 
 This means storing state of machines in a database that gets updated
-by messages (SQLite). It means a good message broker (Redis). It means
-that every time you write a monitoring service, you'll have to write a
-receiver to turn it into a datastructure something like miniKanren can
-solve. A key feature of sheepdog is to make *creating* such small
-reporter/receiver tools really easy. Sheepdog is pluggable - that
-means you can write a plugin for a monitor and you can write a plugin
-for the reporter/receiver which has hooks in the sheepdog daemon that
-runs on a server somewhere.
+by messages (SQLite). It means a good message broker (Redis,
+RabbitMQ). It means that every time you write a monitoring service,
+you'll have to write a receiver to turn it into a data structure
+something like miniKanren can solve. A key feature of sheepdog is to
+make *creating* such small reporter/receiver tools really
+easy. Sheepdog is pluggable - that means you can write a plugin for a
+monitor and you can write a plugin for the reporter/receiver which has
+hooks in the sheepdog daemon that runs on a server somewhere.
 
 Visualisations are less important - though it is quite possible to
 build them.
@@ -87,6 +87,20 @@ are (configurable) plugins.
 The receiver is part of sheepdog-queue-daemon and consists of matching
 plugins (in fact, monitor and receiver with hooks live in the same
 source file).
+
+
+* DEVELOPMENT
+
+** EMACS configuration
+
+#+begin_src scheme
+(when (require 'rainbow-delimiters nil 'noerror)
+  (add-hook 'scheme-mode-hook #'rainbow-delimiters-mode))
+#+end_src
+
+** EMACS on the REPL
+
+In emacs M-x run-geiser to get a REPL. See also [[http://www.nongnu.org/geiser/geiser_3.html][geiser]] docs.
 
 * LICENSE
 

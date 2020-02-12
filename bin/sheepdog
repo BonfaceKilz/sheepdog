@@ -1,0 +1,32 @@
+#! /home/wrk/opt/sheepdog/bin/guile -s
+!#
+
+;; (use-modules (sjson) (sjson utils))
+(use-modules (ice-9 getopt-long))
+
+(define (main args)
+  (let* ((option-spec '((server  (single-char #\H) (value #t))
+                        (version (single-char #\v) (value #f))
+                        (help    (single-char #\h) (value #f))))
+         (options (getopt-long args option-spec))
+         (set-server (option-ref options 'server #f))
+         (help-wanted (option-ref options 'help #f))
+         (version-wanted (option-ref options 'version #f)))
+    (if (or set-server version-wanted help-wanted)
+        (begin
+          (if set-server
+              (display (option-ref options 'server #f)))
+          (if version-wanted
+              (display "sheepdog version 0.1\n"))
+          (if help-wanted
+              (display "\
+sheepdog [options]
+  -H               server[:port] (default localhost:6379)
+  -v, --version    Display version
+  -h, --help       Display this help
+")))
+        (begin
+          (display "Hello, World!") (newline)))))
+
+(display "sheepdog\n")
+(main (command-line))
