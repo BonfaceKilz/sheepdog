@@ -2,7 +2,8 @@
 !#
 
 ;; (use-modules (sjson) (sjson utils))
-(use-modules (ice-9 getopt-long))
+(use-modules (ice-9 getopt-long)
+             (ice-9 format))
 
 (define (parse-args args)
   ;; some magic because both -H and --server work
@@ -41,6 +42,30 @@ sheepdog [options]
 (let* [(op (parse-args (command-line)))
        (config (option-ref op 'config #f))
        ]
-  (display config)
-  (display config)
-  )
+  (display (string-append "Reading " config))
+  (let* [(port (open-file config "r"))
+         (buf (read port))
+         (global (cdr buf))
+         (ishost (assoc 'host global))
+         (host (cond
+                   [(list? ishost) (car (cdr ishost))]))
+         (ismail (assoc 'mailto global))
+         (mailto (cond
+                   [(list? ismail) (car (cdr ismail))]))
+         (isunknown (assoc 'unknown global))
+         (unknown (cond
+                   [(list? isunknown)]))
+         ]
+    (begin
+      (display "BUFFER:")
+      (display buf)
+      (newline)
+      (display "HOST:")
+      (write host)
+      (display "Mail:")
+      (display mailto)
+      (newline)
+      (display (format #t "~s" port))
+      (write isunknown)
+      (write unknown)
+  )))
