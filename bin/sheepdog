@@ -5,28 +5,34 @@
 (use-modules (ice-9 getopt-long))
 
 (define (main args)
+  ;; some magic because both -H and --server work
   (let* ((option-spec '((server  (single-char #\H) (value #t))
+                        (config  (single-char #\c) (value #t))
                         (version (single-char #\v) (value #f))
                         (help    (single-char #\h) (value #f))))
          (options (getopt-long args option-spec))
          (set-server (option-ref options 'server #f))
+         (set-config (option-ref options 'config #f))
          (help-wanted (option-ref options 'help #f))
          (version-wanted (option-ref options 'version #f)))
-    (if (or set-server version-wanted help-wanted)
+    (if (or set-server set-config version-wanted help-wanted)
         (begin
           (if set-server
               (display (option-ref options 'server #f)))
+          (if set-config
+              (display (string-append "config-fn=" (option-ref options 'config #f))))
           (if version-wanted
               (display "sheepdog version 0.1\n"))
           (if help-wanted
               (display "\
 sheepdog [options]
-  -H               server[:port] (default localhost:6379)
+  -c, --config     config-filename
+  -H, --server     server[:port] (default localhost:6379)
   -v, --version    Display version
   -h, --help       Display this help
 ")))
         (begin
-          (display "Hello, World!") (newline)))))
+          (display (string-append "Hello, World!" (option-ref options 'config #f))) (newline)))))
 
 (display "sheepdog\n")
 (main (command-line))

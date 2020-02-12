@@ -1,36 +1,62 @@
 -*- mode: org -*-
 
+#+TITLE: Sheepdog software
+
+* Table of Contents                                                     :TOC:
+ - [[#sheepdog][Sheepdog]]
+ - [[#modules][Modules]]
+   - [[#in-progress-track-cron-jobs][IN PROGRESS Track (CRON) jobs]]
+   - [[#track-system-indicators][Track system indicators]]
+   - [[#diary-notifications][Diary notifications]]
+   - [[#remote-job-execution][Remote job execution]]
+ - [[#implementation][IMPLEMENTATION]]
+   - [[#barking][Barking]]
+ - [[#development][DEVELOPMENT]]
+   - [[#emacs-configuration][EMACS configuration]]
+   - [[#emacs-on-the-repl][EMACS on the REPL]]
+ - [[#license][LICENSE]]
+
 * Sheepdog
+
+/NOTICE: Sheepdog software is in early stages of development. YMMV./
+
+Sheepdog features:
+
+- Sheepdog is effectively a bi-directional message broker. The
+  sheepdog both listens and barks!
+- Sheepdog is written in GNU Guile. Even so, notifiers can be written
+  in any language, including shell scripts, Python, Rust etc.
 
 A shepherd needs a sheepdog. If you have a herd of machines sheepdog
 helps you keep sane. Sheepdog does not replace the likes of Nagios or
 Zabbix though I am happy not to run those systems because they target
-(complex) deployments that have people watching these systems.
+(complex) deployments that have people watching these
+systems. Sheepdog can interact with other machines and, for example,
+schedule jobs or reconfigure a firewall during a hacking attempt.
 
-NOTICE: Sheepdog software is in early stages of development. YMMV.
-
-Sheepdog is much simpler because it does not require watching
-systems. Sheepdog gives a cursory idea of health of machines out
-there. It notifies you if things go really wrong, for example when
+Sheepdog is much simpler than Nagios because it does not require
+watching systems. Sheepdog gives a cursory idea of health of machines
+out there. It notifies you if things go really wrong, for example when
 backups fail. I used to have scripts for that that would mail/text
 me. But that was all a bit ad hoc and I got tired of maintaining them
-and I got tired of repeating notifications...
+and I got tired of repeating notifications... Always an itch to
+scratch.
 
-Also, sheepdog is a real helper for the shepherd.  It is designed to
-use logic programming. And allows questions like:
+Also, sheepdog is a real helper for the shepherd.  It will be designed
+to use logic programming. And allows questions like:
 
 1. What services showed interruptions in the last month on low RAM
    machines that also runs a specific version of nginx?
 
-This means storing state of machines in a database that gets updated
-by messages (SQLite). It means a good message broker (Redis,
-RabbitMQ). It means that every time you write a monitoring service,
-you'll have to write a receiver to turn it into a data structure
-something like miniKanren can solve. A key feature of sheepdog is to
-make *creating* such small reporter/receiver tools really
-easy. Sheepdog is pluggable - that means you can write a plugin for a
-monitor and you can write a plugin for the reporter/receiver which has
-hooks in the sheepdog daemon that runs on a server somewhere.
+This means storing state of machines in a persistent database that
+gets updated by messages (SQLite). It means a good message broker
+(e.g., Redis or RabbitMQ). It means that every time you write a
+monitoring service, you'll have to write a receiver to turn it into a
+data structure. A key feature of sheepdog is to make *creating* such
+small reporter/receiver tools really easy. Sheepdog is pluggable -
+that means you can write a plugin for a monitor and you can write a
+plugin for the reporter/receiver which has hooks in the sheepdog
+daemon that runs on a server somewhere.
 
 Visualisations are less important - though it is quite possible to
 build them.
@@ -40,26 +66,47 @@ sheepdog is a different type of systems monitor: a minimalistic system
 that is hackable and can work out of the box for Guix systems and are
 really easy to extend.
 
-* EXAMPLES
+* Modules
 
-** Track CRON jobs
+** IN PROGRESS Track (CRON) jobs
 
-*** Monitor
+*** Monitor (sheepdog)
 
 Many tools run like CRON jobs and send output to some file. What
-happens when the job fails? You would like a notification. We can
-write a script that tests for the state of the backup job and puts it
-in the message queue when there is a problem:
+happens when the job fails? You would like a notification! We can
+write a script wrapper that tests for the state of the backup job and
+puts it in the message queue when there is a problem. Say we have a
+backup job that backups a the /export/ipfs directory and is run with
 
 #+begin_src sh
-export stamp=$(date +%A-%Y%m%d-%H:%M:%S)
-sheepdog -H localhost:645 -e "borg create --stats /export/backup/borg::ipfs-$stamp /export/ipfs"
+borg create --stats /export/backup/borg::stamp /export/ipfs
 #+end_src
 
-we can tell to only send a message on error with ~--on-error~.  On the
-client we can tell it to inform ~--inform mailto:admin@myhost.eu~.
+Similar to most Unix tools =borg= returns error code ~0~ on success.
+The =sheepdog= has to check the return code and should send a message
+on failure. The message should include the error code and the command
+that was executed. Ideally it should also capture stdout and stderr
+for downstream trouble shooting.
 
-*** Receiver
+#+begin_src sh
+sheepdog -c ~/.sheepdog.conf -m monitor-error \
+  -e "borg create --stats /export/backup/borg::stamp /export/ipfs"
+#+end_src
+
+here we can tell =sheepdog= to only send a message on
+error. =monitor-error= is the client-side module that handles the
+checking.  On the client we can also configure it to connect to a
+certain host (and queue) and pass in an optional E-mail address. I.e.:
+
+#+begin_src scheme
+(config
+  (host "localhost")
+  (port 7777)
+  (mailto "admin@myhost.eu")
+)
+#+end_src
+
+*** Receiver (sheepdog-handler)
 
 The receiver sits on the server and is a default plugin that is part
 of the sheepdog-queue-daemon. Receiving textual output is a standard
@@ -67,9 +114,9 @@ message that is added in the database by the sheepdog-message
 plugin. If you want to change behaviour on the server you can write
 your own plugins.
 
-** Track system indicators
+** TODO Track system indicators
 
-*** Monitor
+*** Monitor (sheepdog)
 
 There are hundreds of possible system indicators. The sheepdog-daemon
 can run on a system and monitors resources by default. Start the
@@ -82,11 +129,51 @@ sheepdog-daemon -c server-config.scm
 In the configuration you can specify what to watch. All monitors
 are (configurable) plugins.
 
-** Receiver
+*** Receiver (sheepdog-handler)
 
 The receiver is part of sheepdog-queue-daemon and consists of matching
 plugins (in fact, monitor and receiver with hooks live in the same
 source file).
+
+** TODO Diary notifications
+
+** TODO Remote job execution
+
+
+* IMPLEMENTATION
+
+** Barking
+
+The implementation starts in the most simple way. A message broker on
+a server. The actual [[https://redislabs.com/ebook/part-2-core-concepts/chapter-6-application-components-in-redis/6-4-task-queues/6-4-1-first-in-first-out-queues/][queues]] are managed by Redis (a choice which may
+change later). As a choice redis is common, safe and fast. Later when
+we get to federated/distributed servers there may be other
+alternatives. On the server runs sheepdog-handler which attaches
+itself to a notification queue. When the sheepdog barks, a message
+goes into the queue and gets processed by the handler:
+
+: sheepdog -> bark -> queue -> handler
+
+On the sheepdog end we create a module that reports on system error
+and pushes a commond when an error occurs. On the handler end we
+create a matching module which gets invoked when a message comes in.
+
+This way both modules understand the ~content~ of the message that
+gets passed around. The handler module can decide what to do
+with the message:
+
+- Store the message in the database
+- Report error by E-mail
+- Write error to log
+
+That is all up to the implementor! Key to understanding sheepdog
+is the flexible design and the *hackability* of message broker
+service.
+
+Sheepdog is written in GNU Guile because it comes with almost every
+Linux installation. GNU Guile is a very powerful Lisp dialect. Even
+so, tools that use the sheepdog can be written in *any* language.
+
 
 
 * DEVELOPMENT
