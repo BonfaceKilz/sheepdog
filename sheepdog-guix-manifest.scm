@@ -4,7 +4,13 @@
 
 (packages->manifest
  (list
+       ;; ---- Runtime
        glibc-utf8-locales
+       redis
+       guile-2.2
+       guile-sjson
+       guile-redis
+       ;; ---- Development
        emacs
        emacs-rainbow-delimiters
        emacs-magit
@@ -14,8 +20,4 @@
        emacs-markdown-mode
        emacs-org
        emacs-paredit
-       guile-2.2
-       guile-sjson
-       guile-redis
-       guile-sqlite3
        ))
