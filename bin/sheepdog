@@ -48,26 +48,27 @@ sheepdog [options]
   (let* [(port (open-file config "r"))
          (buf (read port))
          (global (cdr buf))
-         (host (match (assoc 'host global)
-                 [(host name) name]
+         ;; remote host, port and mail
+         (rhost (match (assoc 'host global)
+                 [('host name) name]
+                 [else "localhost"]))
+         (rport (match (assoc 'port global)
+                 [('port num) num]
+                 [else 7777]))
+         (rmailto (match (assoc 'mailto global)
+                 [('mailto name) name]
                  [else #f]))
-         (ismail (assoc 'mailto global))
-         (mailto (cond
-                   [(list? ismail) (car (cdr ismail))]))
-         (isunknown (assoc 'unknown global))
-         (unknown (cond
-                   [(list? isunknown)]))
          ]
     (begin
       (display "BUFFER:")
       (display buf)
       (newline)
       (display "HOST:")
-      (write host)
+      (write rhost)
+      (display "Port:")
+      (write rport)
       (display "Mail:")
-      (display mailto)
+      (write rmailto)
       (newline)
       (display (format #t "~s" port))
-      (write isunknown)
-      (write unknown)
   )))
