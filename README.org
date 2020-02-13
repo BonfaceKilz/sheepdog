@@ -24,8 +24,9 @@ Sheepdog features:
 
 - Sheepdog is effectively a bi-directional message broker. The
   sheepdog both listens and barks!
-- Sheepdog is written in GNU Guile. Even so, notifiers can be written
-  in any language, including shell scripts, Python, Rust etc.
+- Sheepdog is written in [[https://www.gnu.org/software/guile/][GNU Guile]] so it can run anywhere. Even so,
+  notifiers and monitors/receivers can be written in any language,
+  including shell scripts, Python, Rust etc.
 
 A shepherd needs a sheepdog. If you have a herd of machines sheepdog
 helps you keep sane. Sheepdog does not replace the likes of Nagios or
@@ -94,7 +95,7 @@ sheepdog -c ~/.sheepdog.conf -m monitor-error \
 #+end_src
 
 here we can tell =sheepdog= to only send a message on
-error. =monitor-error= is the client-side module that handles the
+error. =monitor-error= is the [[./sheepdog/monitor/monitor-error.scm][client-side module]] that handles the
 checking.  On the client we can also configure it to connect to a
 certain host (and queue) and pass in an optional E-mail address. I.e.:
 
@@ -170,9 +171,11 @@ That is all up to the implementor! Key to understanding sheepdog
 is the flexible design and the *hackability* of message broker
 service.
 
-Sheepdog is written in GNU Guile because it comes with almost every
-Linux installation. GNU Guile is a very powerful Lisp dialect. Even
-so, tools that use the sheepdog can be written in *any* language.
+Sheepdog is written in [[https://www.gnu.org/software/guile/][GNU Guile]] because it is small and fast and
+comes with almost every Linux installation. Sheepdog/Guile installs
+even on the smallest routers and mobile platforms. GNU Guile is a very
+powerful Scheme Lisp dialect. Even so, tools that use the sheepdog can
+be written in *any* language.
 
 
 
