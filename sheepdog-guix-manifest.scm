@@ -7,7 +7,7 @@
        ;; ---- Runtime
        glibc-utf8-locales
        redis
-       guile-2.2
+       guile
        guile-sjson
        guile-redis
        ;; ---- Development
