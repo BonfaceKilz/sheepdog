@@ -1,1 +1,14 @@
-*.aof
+*.eps
+*.go
+*.log
+*.pdf
+*.png
+*.tar.xz
+*.tmp
+*~
+.#*
+\#*\#
+,*
+/po
+/build-aux
+/nix
