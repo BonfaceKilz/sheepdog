@@ -1,0 +1,10 @@
+(define-module (sheepdog bark)
+  #:use-module ((ice-9 popen))
+  #:use-module (ice-9 rdelim)
+  #:export (run-job))
+
+(define (run-job job)
+  (let* ((port (open-input-pipe job))
+         (str (read-line port)))
+    (close-pipe port)
+    str))
