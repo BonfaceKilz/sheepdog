@@ -12,3 +12,6 @@
 /po
 /build-aux
 /nix
+/autom4te.cache/
+*.trs
+*.tar.gz
