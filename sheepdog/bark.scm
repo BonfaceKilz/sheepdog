@@ -4,11 +4,6 @@
   #:use-module (ice-9 rdelim)
   #:export (run-job))
 
-(define (run-job job)
-  (let* ((port (open-input-pipe job))
-         (str (read-line port)))
-    (close-pipe port)
-    str))
 
 (define (call-command-with-output-error-to-string cmd)
   (let* ((err-cons (pipe))
@@ -32,3 +27,14 @@
                        throw 'sheepdog-error 2
                        "job: invalid args (action: should be a lambda"
                        "function, string or list)")))
+
+(define (run-job job)
+  (if (= (primitive-fork) 0)
+      (dynamic-wind ;child
+        (const #t)
+        (λ ()
+          (catch-all job))
+        (λ ()
+          (primitive-exit 0)))
+      (begin ; parent
+        (display "Done running sheepdog :)")))
