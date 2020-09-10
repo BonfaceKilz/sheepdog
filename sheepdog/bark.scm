@@ -1,4 +1,5 @@
 (define-module (sheepdog bark)
+  #:use-module (sheepdog error)
   #:use-module ((ice-9 popen))
   #:use-module (ice-9 rdelim)
   #:export (run-job))
@@ -21,3 +22,13 @@
      result
      (read-delimited "" (car err-cons)))))
 
+(define (job action)
+  (cond ((procedure? action) action)
+                      ((list? action) (λ () (primitive-eval action)))
+                      ((string? action)
+                       (λ ()
+                         (call-command-with-output-error-to-string action)))
+                      (else
+                       throw 'sheepdog-error 2
+                       "job: invalid args (action: should be a lambda"
+                       "function, string or list)")))
