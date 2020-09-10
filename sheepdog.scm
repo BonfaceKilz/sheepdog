@@ -10,6 +10,3 @@
                 (lambda (m)
                   (module-use! i (resolve-interface `(sheepdog ,m)))))
               %public-modules)))
-
-;; (define-public (say-hello)
-;;   "Hello hackers !")
