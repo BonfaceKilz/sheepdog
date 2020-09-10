@@ -3,11 +3,11 @@
   #:use-module (sheepdog bark)
   #:use-module (srfi srfi-64))
 
-(test-begin "test-suite")
+
+(test-begin "test-bark")
 
 (test-equal "Run Job"
   "test"
   (run-job "echo test"))
 
-(test-end "test-suite")
-
+(test-end "test-bark")
