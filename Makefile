@@ -528,7 +528,8 @@ SOURCES = sheepdog.scm \
           sheepdog/monitor/monitor-error.scm \
           sheepdog/bark.scm
 
-TESTS = tests/bark.scm
+TESTS = tests/error.scm \
+	tests/bark.scm
 TEST_EXTENSIONS = .scm
 SCM_LOG_DRIVER = \
   $(top_builddir)/pre-inst-env                  \
