@@ -42,48 +42,34 @@ COMMAND's standard error."
                (car output)
                (car output/error))))))
 
-(define (call-command-with-output-error-to-string cmd)
-  (let* ((err-cons (pipe))
-         (port (with-error-to-port (cdr err-cons)
-                 (λ () (open-input-pipe cmd))))
-         (_ (setvbuf (car err-cons) 'block
-             (* 1024 1024 16)))
-         (result (read-delimited "" port)))
-    (close-port (cdr err-cons))
-    (values
-     result
-     (read-delimited "" (car err-cons)))))
 
-(define (job action)
-  (cond ((procedure? action) action)
-        ((list? action)
-         (λ ()
-           (receive (pid output input err)
-               (pipe-pair action)
-             (close-port output)
-             (let ((results (get-bytevector-all input))
-                   (err-msg (get-bytevector-all err)))
-               (close-port err)
-               (close-port input)
-               (match (waitpid pid)
-                 ((_ . 0) (display (utf8->string results))) ;; success
-                 ((_ . status)
-                  (throw 'sheepdog-error status (utf8->string err-msg)))))))
-        ((string? action)
-         (λ ()
-           (call-command-with-output-error-to-string action)))
-        (else
-         throw 'sheepdog-error 2
-         "job: invalid args (action: should be a lambda"
-         "function, string or list)")))
+(define (run-command action)
+  "Run ACTION using pipe-pair function."
+  (define command
+    (if (list? action)
+        action
+        (string-split action #\space)))
+  (receive (pid output input err)
+      (pipe-pair command)
+    (close-port output)
+    (let ((results (get-bytevector-all input))
+          (err-msg (get-bytevector-all err)))
+      (close-port err)
+      (close-port input)
+      (match (waitpid pid)
+        ((_ . 0) (utf8->string results)) ;; success
+        ((_ . status)
+         (throw 'sheepdog-error status (utf8->string err-msg)))))))
 
-(define (run-job job)
-  (if (= (primitive-fork) 0)
-      (dynamic-wind ;child
-        (const #t)
-        (λ ()
-          (catch-all job))
-        (λ ()
-          (primitive-exit 0)))
-      (begin ; parent
-        (display "Done running sheepdog :)")))
+
+(define (run-job action)
+  (catch-all
+   (λ ()
+     (cond
+      ((procedure? action) (action))
+      ((or (list? action) (string? action))
+       (run-command action))
+      (else
+       throw 'sheepdog-error 2
+       "job: invalid args (action: should be a lambda"
+       "function, string or list)")))))
