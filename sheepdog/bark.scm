@@ -11,7 +11,7 @@
 
 ; See:
 ; https://wiki.gnu.tools/git/gnu-tools-wiki/tree/code/modules/email.scm
-(define (pipe-pair cmd)
+(define (pipe-pair command)
   "Run COMMAND as a separate process and return four values values: its PID,
 an output port to write on COMMAND's standard input, an input port to
 read COMMAND's standard output, and an output/error port to read
@@ -30,7 +30,7 @@ COMMAND's standard error."
            (dup2 (fileno (car input)) 0)
            (dup2 (fileno (cdr output)) 1)
            (dup2 (fileno (cdr output/error)) 2)
-           (apply execlp (car cmd) cmd))
+           (apply execlp (car command) command))
          (λ ()
            (primitive-_exit 127))))
       (pid
