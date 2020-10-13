@@ -1,6 +1,7 @@
 (define-module (sheepdog error)
   #:use-module (ice-9 rdelim)
-  #:export (sheepdog-error))
+  #:export (sheepdog-error
+            catch-all))
 
 
 (define (sheepdog-error exit-code . rest)
