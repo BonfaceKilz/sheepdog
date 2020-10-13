@@ -56,14 +56,26 @@ COMMAND's standard error."
 
 (define (job action)
   (cond ((procedure? action) action)
-                      ((list? action) (λ () (primitive-eval action)))
-                      ((string? action)
-                       (λ ()
-                         (call-command-with-output-error-to-string action)))
-                      (else
-                       throw 'sheepdog-error 2
-                       "job: invalid args (action: should be a lambda"
-                       "function, string or list)")))
+        ((list? action)
+         (λ ()
+           (receive (pid output input err)
+               (pipe-pair action)
+             (close-port output)
+             (let ((results (get-bytevector-all input))
+                   (err-msg (get-bytevector-all err)))
+               (close-port err)
+               (close-port input)
+               (match (waitpid pid)
+                 ((_ . 0) (display (utf8->string results))) ;; success
+                 ((_ . status)
+                  (throw 'sheepdog-error status (utf8->string err-msg)))))))
+        ((string? action)
+         (λ ()
+           (call-command-with-output-error-to-string action)))
+        (else
+         throw 'sheepdog-error 2
+         "job: invalid args (action: should be a lambda"
+         "function, string or list)")))
 
 (define (run-job job)
   (if (= (primitive-fork) 0)
