@@ -1,5 +1,5 @@
 (define-module (monitor-error)
   #:export (run))
 
-(define (run cmd)
-  )
+;; TODO: Replace later
+(define (run cmd) (display "test"))
