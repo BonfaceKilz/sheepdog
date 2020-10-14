@@ -17,12 +17,15 @@
                  "monitor"
                  ((compiled-scheme-file "monitor-error")
                   (scheme-file "monitor-error")))
+               (scheme-file "error")
                (compiled-scheme-file "bark")
+               (scheme-file "base")
                (scheme-file "bark")))))
          (tests ((directory
                    "tests"
                    ((log-file "bark")
                     (test-result-file "bark")
+                    (scheme-file "error")
                     (scheme-file "bark")))))
          (programs ((directory "scripts" ())))
          (documentation
@@ -39,10 +42,49 @@
                (texi-file "version")))
             (text-file "NEWS")
             (text-file "AUTHORS")
+            (text-file "ChangeLog")
+            (text-file "NEWS")
+            (text-file "AUTHORS")
+            (text-file "ChangeLog")
+            (text-file "NEWS")
+            (text-file "AUTHORS")
+            (text-file "ChangeLog")
+            (text-file "NEWS")
+            (text-file "AUTHORS")
             (text-file "ChangeLog")))
          (infrastructure
            ((scheme-file "guix")
             (scheme-file "hall")
+            (directory
+              "build-aux"
+              ((text-file "mdate-sh")
+               (text-file "install-sh")
+               (text-file "missing")
+               (scheme-file "test-driver")
+               (tex-file "texinfo")))
+            (autoconf-file "configure")
+            (automake-file "Makefile")
+            (in-file "pre-inst-env")
+            (directory
+              "build-aux"
+              ((text-file "mdate-sh")
+               (text-file "install-sh")
+               (text-file "missing")
+               (scheme-file "test-driver")
+               (tex-file "texinfo")))
+            (autoconf-file "configure")
+            (automake-file "Makefile")
+            (in-file "pre-inst-env")
+            (directory
+              "build-aux"
+              ((text-file "mdate-sh")
+               (text-file "install-sh")
+               (text-file "missing")
+               (scheme-file "test-driver")
+               (tex-file "texinfo")))
+            (autoconf-file "configure")
+            (automake-file "Makefile")
+            (in-file "pre-inst-env")
             (directory
               "build-aux"
               ((text-file "mdate-sh")
