@@ -1,63 +1,77 @@
 #! /home/wrk/opt/sheepdog/bin/guile -s
 !#
 
-;; (use-modules (sjson) (sjson utils))
-(use-modules (ice-9 getopt-long)
-             (ice-9 format)
-             (ice-9 hash-table)
-             (ice-9 match))
+(use-modules (ice-9 format)
+             (ice-9 match)
+             (srfi srfi-1)
+             (srfi srfi-37))
 
-(define (parse-args args)
-  ;; some magic because both -H and --server work
-  (let* ((option-spec '(;; (server  (single-char #\H) (value #t))
-                        (config  (single-char #\c) (value #t))
-                        (version (single-char #\v) (value #f))
-                        (help    (single-char #\h) (value #f))))
-         (options (getopt-long args option-spec))
-         (set-server (option-ref options 'server #f))
-         (set-config (option-ref options 'config #f))
-         (help-wanted (option-ref options 'help #f))
-         (version-wanted (option-ref options 'version #f)))
-    (if (or set-config version-wanted help-wanted)
-        (begin
-          (if set-config
-              (display (string-append "config=" set-config "\n")))
-          (if version-wanted
-              (display "sheepdog version 0.1\n"))
-          (if help-wanted
-              (display "\
-sheepdog [options]
-  -c, --config     config-filename
-  -v, --version    Display version
-  -h, --help       Display this help
+(define %program-arguments
+  (match (program-arguments)
+    ((_)
+     (display "You need to provide an argument. See sheepdog --help\n")
+     (exit 0))
+    ((_ args ...)
+     args)))
+
+(define %options
+  (list (option '(#\c "config") #t #f
+                (lambda (opt name arg result)
+                  (alist-cons 'config arg result)))
+        (option '(#\v "version") #f #f
+                (lambda args
+                  (display "sheepdog version 0.1\n")
+                  (exit 0)))
+        (option '(#\h "help") #f #f
+                (lambda args
+                  (show-help)
+                  (exit 0)))))
+
+(define synopsis 'command-synopsis)
+
+(define (show-help)
+  (display "Usage: sheepdog [OPTION]...
+Run Sheepdog
+  -c, --config=CONFIG_FILE     Configuration Filename
+  -v, --version                Display version
+  -h, --help                   Display this help
 "))
-          options))))
 
-(display "sheepdog\n")
-; (let [(ops (parse-args (command-line)))])
+(define (args-fold* args options unrecognized-option-proc operand-proc . seeds)
+  "A wrapper on top of `args-fold' that does proper user-facing error
+reporting."
+  (catch 'misc-error
+    (lambda ()
+      (apply args-fold args options unrecognized-option-proc
+             operand-proc seeds))
+    (lambda (key proc msg args . rest)
+      (match args
+        ((or (#\c) ("config"))
+         (display "Please provide a configuration file!\n"))
+        ((flag)
+         (display (apply (list format #f "Invalid argument: ~a~%\n" flag)))))
+      (exit 1))))
 
-(let* [(op (parse-args (command-line)))
-       (config (option-ref op 'config #f))
-       ]
-  (match config
-    [#f (begin
-          (display "\nERROR: Please define config file, for now!\n\n")
-          (raise 2))]
-     [else #f])
-  (let* [(port (open-file config "r"))
-         (buf (read port))
-         (global (cdr buf))
-         ;; remote host, port and mail
-         (rhost (match (assoc 'host global)
-                 [('host name) name]
-                 [else "localhost"]))
-         (rport (match (assoc 'port global)
-                 [('port num) num]
-                 [else 7777]))
-         (rmailto (match (assoc 'mailto global)
-                 [('mailto name) name]
-                 [else #f]))
-         ]
-    (begin
-      (display buf)
-  )))
+(define-syntax define-command
+  (syntax-rules (synopsis)
+    "Define the given command as a procedure along with its synopsis.
+The synopsis becomes the docstring of the procedure."
+    ((_ (name . args)
+        (synopsis doc) body ...)
+     (define (name args)
+       doc
+       body ...))))
+
+(define-command (run-sheepdog . args)
+  (synopsis "run the sheepdog command")
+  (let* ((opts (args-fold* args %options
+                           (lambda (opt name arg result)
+                             (display (apply format (list #f "Invalid argument: ~a~%" name)))
+                             (exit 1))
+                           (lambda (op loads) (cons op loads))
+                           '()))
+         (conf-file (assoc-ref opts 'config)))
+    ;; Action
+    (display conf-file)))
+
+(run-sheepdog %program-arguments)
