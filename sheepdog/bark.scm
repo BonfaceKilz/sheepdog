@@ -68,11 +68,11 @@ COMMAND's standard error."
 (define (run-job action)
   (catch-all
    (λ ()
-     (cond
-      ((procedure? action) (action))
-      ((or (list? action) (string? action))
-       (run-command action))
-      (else
-       throw 'sheepdog-error 2
-       "job: invalid args (action: should be a lambda"
-       "function, string or list)")))))
+     (match action
+       ((? procedure?) (action))
+       ((or (? list?) (? string?))
+        (run-command action))
+       (_
+        (throw 'sheepdog-error 2
+               "job: invalid args (action: should be a lambda"
+               "function, string or list)"))))))
