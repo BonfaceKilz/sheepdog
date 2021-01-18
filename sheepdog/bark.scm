@@ -4,7 +4,6 @@
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
   #:use-module (ice-9 popen)
-  #:use-module (ice-9 receive)
   #:use-module (ice-9 rdelim)
   #:use-module (srfi srfi-9)
   #:export (run-job))
@@ -62,7 +61,9 @@ COMMAND's standard error."
          (close-port input-in)
          (close-port output-out)
          (close-port err-out)
-         (values pid input-out output-in err-in))))))
+         ;; output-in is the command's STDIN; input-out is the commands
+         ;; STDOUT; and err-in is the command's STDERR
+         (make-pipe* pid output-in input-out err-in))))))
 
 
 (define (run-command action)
@@ -71,15 +72,15 @@ COMMAND's standard error."
     (if (list? action)
         action
         (string-split action #\space)))
-  (receive (pid output input err)
-      (pipe-pair command)
-    (close-port output)
-    (let ((results (get-bytevector-all input))
-          (err-msg (get-bytevector-all err)))
-      (close-port err)
-      (close-port input)
+  (match-let ((($ <pipe*> pid stdin stdout stderr) (pipe-pair command)))
+    (close-port stdout)
+    (let ((results (get-bytevector-all stdin))
+          (err-msg (get-bytevector-all stderr)))
+      (close-port stderr)
+      (close-port stdin)
       (match (waitpid pid)
-        ((_ . 0) (utf8->string results)) ;; success
+        ((_ . 0)
+         (utf8->string results)) ;; success
         ((_ . status)
          (throw 'sheepdog-error status (utf8->string err-msg)))))))
 
