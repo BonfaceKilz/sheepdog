@@ -30,10 +30,8 @@
 ; See:
 ; https://wiki.gnu.tools/git/gnu-tools-wiki/tree/code/modules/email.scm
 (define (pipe-pair command)
-  "Run COMMAND as a separate process and return four values values: its PID,
-an output port to write on COMMAND's standard input, an input port to
-read COMMAND's standard output, and an output/error port to read
-COMMAND's standard error."
+  "Run COMMAND as a separate process and return a <pipe*> record type which
+contain's the aforementioned process' pid, stdin, stdout, and stderr."
   (let ((input (pipe))
         (output (pipe))
         (output/error (pipe)))
