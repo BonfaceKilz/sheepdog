@@ -63,33 +63,39 @@ contain's the aforementioned process' pid, stdin, stdout, and stderr."
          ;; STDOUT; and err-in is the command's STDERR
          (make-pipe* pid output-in input-out err-in))))))
 
+(define* (run-command cmdline-options)
+  "Run command that's wrapped inside CMDLINE-OPTIONS record."
+  (match-let ((($ <cmdline-options> always cmd channel tag host port) cmdline-options))
+    (define command
+      (if (list? cmd)
+          cmd
+          (string-split cmd #\space)))
+    (match-let ((($ <pipe*> pid stdin stdout stderr) (pipe-pair command)))
+      (close-port stdout)
+      (let ((results (get-bytevector-all stdin))
+            (err-msg (get-bytevector-all stderr)))
+        (close-port stderr)
+        (close-port stdin)
+        (match (waitpid pid)
+          ((_ . 0)
+           (utf8->string results)) ;; success
+          ((_ . status)
+           (throw 'sheepdog-error status (utf8->string err-msg))))))))
 
-(define (run-command action)
-  "Run ACTION using pipe-pair function."
-  (define command
-    (if (list? action)
-        action
-        (string-split action #\space)))
-  (match-let ((($ <pipe*> pid stdin stdout stderr) (pipe-pair command)))
-    (close-port stdout)
-    (let ((results (get-bytevector-all stdin))
-          (err-msg (get-bytevector-all stderr)))
-      (close-port stderr)
-      (close-port stdin)
-      (match (waitpid pid)
-        ((_ . 0)
-         (utf8->string results)) ;; success
-        ((_ . status)
-         (throw 'sheepdog-error status (utf8->string err-msg)))))))
-
-
-(define (run-job action)
+(define* (run-job action
+                  #:key
+                  (always #f)
+                  (channel "")
+                  (tag "")
+                  (host "127.0.0.1")
+                  (port 6379))
+  "Run ACTION and if an an error occurs, send the error to Redis."
   (catch-all
    (λ ()
      (match action
        ((? procedure?) (action))
        ((or (? list?) (? string?))
-        (run-command action))
+        (run-command (make-cmdline-options always action channel tag host port)))
        (_
         (throw 'sheepdog-error 2
                "job: invalid args (action: should be a lambda"
