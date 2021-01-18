@@ -6,6 +6,7 @@
   #:use-module (ice-9 popen)
   #:use-module (ice-9 rdelim)
   #:use-module (srfi srfi-9)
+  #:use-module (redis)
   #:export (run-job))
 
 
@@ -76,11 +77,18 @@ contain's the aforementioned process' pid, stdin, stdout, and stderr."
             (err-msg (get-bytevector-all stderr)))
         (close-port stderr)
         (close-port stdin)
+        (define conn (redis-connect #:host host #:port port))
         (match (waitpid pid)
           ((_ . 0)
            (utf8->string results)) ;; success
-          ((_ . status)
-           (throw 'sheepdog-error status (utf8->string err-msg))))))))
+          (( . status)
+           (redis-publish conn
+                          (string-append channel tag)
+                          (format #f "~a- ~a"
+                                  (strftime "%c" (localtime (current-time)))
+                                  (match err-msg
+                                    ((? bytevector?) (utf8->string err-msg))
+                                    (_ err-msg))))))))))
 
 (define* (run-job action
                   #:key
