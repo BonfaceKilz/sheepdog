@@ -6,8 +6,27 @@
   #:use-module (ice-9 popen)
   #:use-module (ice-9 receive)
   #:use-module (ice-9 rdelim)
+  #:use-module (srfi srfi-9)
   #:export (run-job))
 
+
+(define-record-type <cmdline-options>
+  (make-cmdline-options always cmd channel tag host port)
+  cmd-line-options?
+  (always  cmdline-options-name)
+  (cmd     cmdline-options-cmd)
+  (channel cmdline-options-channel)
+  (tag     cmdline-options-tag)
+  (host    cmdline-options-tag)
+  (port    cmdline-options-port))
+
+(define-record-type <pipe*>
+  (make-pipe* pid stdin stdout stderr)
+  pipe*?
+  (pid    pipe*-pid)
+  (stdin  pipe*-stdin)
+  (stdout pipe*-stdout)
+  (stderr pipe*-stderr))
 
 ; See:
 ; https://wiki.gnu.tools/git/gnu-tools-wiki/tree/code/modules/email.scm
