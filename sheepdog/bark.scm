@@ -85,7 +85,7 @@ contain's the aforementioned process' pid, stdin, stdout, and stderr."
 (define* (run-job action
                   #:key
                   (always #f)
-                  (channel "")
+                  (channel "sheepdog")
                   (tag "")
                   (host "127.0.0.1")
                   (port 6379))
