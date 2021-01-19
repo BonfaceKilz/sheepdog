@@ -90,6 +90,17 @@ contain's the aforementioned process' pid, stdin, stdout, and stderr."
                                     ((? bytevector?) (utf8->string err-msg))
                                     (_ err-msg))))))))))
 
+(define (load-config config-path)
+  "Load configuration options from CONFIG-PATH"
+  (define conf '())
+  (with-input-from-file config-path
+    (lambda ()
+      (let loop ((line (read)))
+        (when (not (eof-object? line))
+          (set! conf (append conf (list line)))
+          (loop (read))))))
+  conf)
+
 (define* (run-job action
                   #:key
                   (always #f)
