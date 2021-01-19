@@ -23,18 +23,20 @@
             (err-msg (get-bytevector-all stderr)))
         (close-port stderr)
         (close-port stdin)
-        (define conn (redis-connect #:host host #:port port))
         (match (waitpid pid)
           ((_ . 0)
            (utf8->string results)) ;; success
           (( . status)
-           (redis-publish conn
-                          (string-append channel tag)
-                          (format #f "~a- ~a"
-                                  (strftime "%c" (localtime (current-time)))
-                                  (match err-msg
-                                    ((? bytevector?) (utf8->string err-msg))
-                                    (_ err-msg))))))))))
+           (let ((conn (redis-connect #:host host #:port port)))
+             (redis-publish conn
+                            (string-append channel tag)
+                            (format #f "~a- ~a"
+                                    (strftime "%c" (localtime (current-time)))
+                                    (match err-msg
+                                      ((? bytevector?) (utf8->string err-msg))
+                                      (_ err-msg))))
+             (redis-close conn))))))))
+
 (define* (redis-alive?
           #:key
           (host "127.0.0.1")
