@@ -7,6 +7,7 @@
   #:use-module (redis)
   #:use-module (srfi srfi-1)
   #:export (run-job
+            redis-alive?
             load-config))
 
 (define* (run-command cmdline-options)
@@ -34,6 +35,25 @@
                                   (match err-msg
                                     ((? bytevector?) (utf8->string err-msg))
                                     (_ err-msg))))))))))
+(define* (redis-alive?
+          #:key
+          (host "127.0.0.1")
+          (port 6379))
+  "Ping Redis on HOST:PORT to make sure that it's alive."
+  (with-exception-handler
+      (λ (exn)
+        (format (current-error-port)
+                "Cannot connect to Redis Client on ~a:~a! ~a"
+                host port
+                "Please ensure your Redis client is running.\n")
+        (primitive-exit 2)
+        #f)
+    (λ ()
+      (let ((conn (redis-connect #:host host #:port port)))
+        (redis-send conn (ping))
+        (redis-close conn)
+        #t))
+    #:unwind? #t))
 
 (define (load-config config-path)
   "Load configuration options from CONFIG-PATH"
