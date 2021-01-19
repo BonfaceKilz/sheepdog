@@ -4,7 +4,8 @@
 (use-modules (ice-9 format)
              (ice-9 match)
              (srfi srfi-1)
-             (srfi srfi-37))
+             (srfi srfi-37)
+             (sheepdog bark))
 
 (define %program-arguments
   (match (program-arguments)
@@ -18,6 +19,9 @@
   (list (option '(#\c "config") #t #f
                 (lambda (opt name arg result)
                   (alist-cons 'config arg result)))
+        (option '(#\a "action") #t #f
+                (lambda (opt name arg result)
+                  (alist-cons 'action arg result)))
         (option '(#\v "version") #f #f
                 (lambda args
                   (display "sheepdog version 0.1\n")
@@ -70,8 +74,18 @@ The synopsis becomes the docstring of the procedure."
                              (exit 1))
                            (lambda (op loads) (cons op loads))
                            '()))
-         (conf-file (assoc-ref opts 'config)))
-    ;; Action
-    (display conf-file)))
+         (action (assoc-ref opts 'action))
+         (conf-file (match (load-config (assoc-ref opts 'config))
+                      (((config m ...))
+                       m)))
+         (redis-conf (assoc-ref conf-file 'redis))
+         (host (assoc-ref redis-conf 'host))
+         (port (assoc-ref redis-conf 'port)))
+    ;; load the conf file:
+    #;(display conf-file)
+    (run-job action
+             #:channel "sheepdog"
+             #:host (if host host "127.0.0.1")
+             #:port (if port port 6379))))
 
 (run-sheepdog %program-arguments)
