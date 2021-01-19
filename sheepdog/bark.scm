@@ -5,7 +5,9 @@
   #:use-module (rnrs bytevectors)
   #:use-module (ice-9 match)
   #:use-module (redis)
-  #:export (run-job))
+  #:use-module (srfi srfi-1)
+  #:export (run-job
+            load-config))
 
 (define* (run-command cmdline-options)
   "Run command that's wrapped inside CMDLINE-OPTIONS record."
