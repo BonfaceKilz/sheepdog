@@ -14,7 +14,7 @@
       (if (list? cmd)
           cmd
           (string-split cmd #\space)))
-    (match-let ((($ <pipe*> pid stdin stdout stderr) (pipe-pair command)))
+    (match-let ((($ <cmd-pipe*> pid stdin stdout stderr) (pipe-pair command)))
       (close-port stdout)
       (let ((results (get-bytevector-all stdin))
             (err-msg (get-bytevector-all stderr)))
