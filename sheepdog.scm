@@ -4,7 +4,7 @@
 (eval-when (eval load compile)
   (begin
     (define %public-modules
-      '(bark error))
+      '(bark base error))
 
     (for-each (let ((i (module-public-interface (current-module))))
                 (lambda (m)
