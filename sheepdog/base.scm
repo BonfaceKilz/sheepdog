@@ -5,6 +5,7 @@
   #:use-module (ice-9 popen)
   #:export (<cmd-pipe*>
             <cmdline-options>
+            make-cmdline-options
             pipe-pair))
 
 (define-record-type <cmdline-options>
