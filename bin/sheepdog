@@ -81,11 +81,11 @@ The synopsis becomes the docstring of the procedure."
          (redis-conf (assoc-ref conf-file 'redis))
          (host (assoc-ref redis-conf 'host))
          (port (assoc-ref redis-conf 'port)))
-    ;; load the conf file:
-    #;(display conf-file)
-    (run-job action
-             #:channel "sheepdog"
-             #:host (if host host "127.0.0.1")
-             #:port (if port port 6379))))
+    (when (redis-alive? #:host (if host host "127.0.0.1")
+                        #:port (if port port 6379))
+      (run-job action
+               #:channel "sheepdog"
+               #:host (if host host "127.0.0.1")
+               #:port (if port port 6379)))))
 
 (run-sheepdog %program-arguments)
