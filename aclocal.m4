@@ -1,6 +1,7 @@
 # generated automatically by aclocal 1.16.2 -*- Autoconf -*-
 
-# Copyright (C) 1996-2020 Free Software Foundation, Inc.
+# Copyright © 1996-2020 Free Software Foundation, Inc.
+# Copyright © 2021 Bonface Munyoki Kilyungi <me@bonfacemunyoki.com>
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
