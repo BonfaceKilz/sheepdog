@@ -48,9 +48,9 @@
                   #:key
                   (always #f)
                   (channel "sheepdog")
-                  (tag "")
                   (host "127.0.0.1")
-                  (port 6379))
+                  (port 6379)
+                  (tag ""))
   "Run ACTION and if an an error occurs, send the error to Redis."
   (catch-all
    (λ ()
