@@ -34,11 +34,18 @@
 (define synopsis 'command-synopsis)
 
 (define (show-help)
-  (display "Usage: sheepdog [OPTION]...
+  (display "Usage: sheepdog [OPTION...]
 Run Sheepdog
+  -a, --action                 Command, script, lisp code to run
   -c, --config=CONFIG_FILE     Configuration Filename
   -v, --version                Display version
   -h, --help                   Display this help
+
+Mandatory or optional arguments to long options are also mandatory or optional
+for any corresponding short options.
+
+Report bugs to me@bonfacemunyoki.com.
+
 "))
 
 (define (args-fold* args options unrecognized-option-proc operand-proc . seeds)
