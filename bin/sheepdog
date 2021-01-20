@@ -4,7 +4,7 @@
 (use-modules (ice-9 format)
              (ice-9 match)
              (srfi srfi-1)
-             (srfi srfi-37)
+             (sheepdog command)
              (sheepdog bark))
 
 (define %program-arguments
@@ -57,31 +57,6 @@ This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
 
 "))
-
-(define (args-fold* args options unrecognized-option-proc operand-proc . seeds)
-  "A wrapper on top of `args-fold' that does proper user-facing error
-reporting."
-  (catch 'misc-error
-    (lambda ()
-      (apply args-fold args options unrecognized-option-proc
-             operand-proc seeds))
-    (lambda (key proc msg args . rest)
-      (match args
-        ((or (#\c) ("config"))
-         (display "Please provide a configuration file!\n"))
-        ((flag)
-         (display (apply (list format #f "Invalid argument: ~a~%\n" flag)))))
-      (exit 1))))
-
-(define-syntax define-command
-  (syntax-rules (synopsis)
-    "Define the given command as a procedure along with its synopsis.
-The synopsis becomes the docstring of the procedure."
-    ((_ (name . args)
-        (synopsis doc) body ...)
-     (define (name args)
-       doc
-       body ...))))
 
 (define-command (run-sheepdog . args)
   (synopsis "run the sheepdog command")
