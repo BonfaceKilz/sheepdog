@@ -24,7 +24,7 @@
                   (alist-cons 'action arg result)))
         (option '(#\v "version") #f #f
                 (lambda args
-                  (display "sheepdog version 0.1\n")
+                  (show-version)
                   (exit 0)))
         (option '(#\h "help") #f #f
                 (lambda args
@@ -45,6 +45,16 @@ Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
 
 Report bugs to me@bonfacemunyoki.com.
+
+"))
+
+(define (show-version)
+  (display "sheepdog version 0.1
+
+Copyright (C) 2021 sheepdog authors
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
 
 "))
 
