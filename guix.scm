@@ -30,6 +30,26 @@
   (gnu packages pkg-config)
   (gnu packages texinfo))
 
+(define-public my-guile-8sync
+  (package
+    (inherit guile-8sync)
+    (name "my-guile-8sync")
+    (version "0.4.2")
+    (source (origin
+              (method git-fetch)
+              (uri (git-reference
+                    (url "https://git.savannah.gnu.org/git/8sync.git")
+                    (commit "5074289a33640bb3bd78a711d7ceb645d7ae0cfd")))
+              (file-name (git-file-name name version))
+              (sha256
+               (base32
+                "1f71vgv338illn0bx1kibcd7j2nn0civy1jz2yqbjjnbivx0g63i"))))
+    (native-inputs `(("autoconf" ,autoconf)
+                     ("automake" ,automake)
+                     ("guile" ,guile-3.0)
+                     ("pkg-config" ,pkg-config)
+                     ("texinfo" ,texinfo)))))
+
 (define my-guile-redis
   (package
     (inherit guile-redis)
@@ -59,6 +79,7 @@
   (inputs `(("guile" ,guile-3.0)))
   (propagated-inputs `(("guile-redis" ,my-guile-redis)
                        ("guile-readline" ,guile-readline)
+                       ("guile-8sync" ,my-guile-8sync)
                        ("guile-colorized" ,guile-colorized)))
   (synopsis "")
   (description "")
