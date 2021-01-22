@@ -1,0 +1,9 @@
+#! /home/wrk/opt/sheepdog/bin/guile -s
+!#
+
+(use-modules (sheepdog actors))
+
+(run-monitor #:host "127.0.0.1"
+             #:port 6379
+             #:channels "sheepdog"
+             #:procedure display)
