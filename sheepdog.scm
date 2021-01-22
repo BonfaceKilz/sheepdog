@@ -23,7 +23,7 @@
 (eval-when (eval load compile)
   (begin
     (define %public-modules
-      '(bark base command error))
+      '(actors bark base command email error))
 
     (for-each (let ((i (module-public-interface (current-module))))
                 (lambda (m)
