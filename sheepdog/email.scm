@@ -27,6 +27,7 @@
   #:use-module (rnrs io ports)
   #:use-module (rnrs bytevectors)
   #:use-module (srfi srfi-19)
+  #:use-module ((web uri) #:select (uri-encode))
   #:export (date->rfc822-string
             compose-message
             send-email))
@@ -186,7 +187,7 @@
 MESSAGE, USER, SECRET, SERVER, and PORT."
   (define uri
     (string-append "mailer { url smtp://"
-                   user ":"
+                   (uri-encode user) ":"
                    secret "@"
                    server ":"
                    port
