@@ -182,17 +182,8 @@
                               "protocol=\"application/pgp-signature\"")
                              #t))))
 
-(define* (send-email #:key message user secret server port (prog-uri #f))
-  "Send MESSAGE returned by 'compose-message', using the SMTP paramaters:
-MESSAGE, USER, SECRET, SERVER, and PORT."
-  (define uri
-    (if (not prog-uri)
-        (string-append "mailer { url smtp://"
-                       (uri-encode user) ":"
-                       secret "@"
-                       server ":"
-                       port
-                       "; }")
-        prog-uri))
+(define* (send-email message uri)
+  "Send MESSAGE returned by 'compose-message', using the mailer URI
+e.g from smtp that would like: smtp://user:pass@host:port"
   (mu-register-format)  ;; Registers all available formats
   (mu-message-send message uri))
