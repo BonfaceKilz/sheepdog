@@ -97,6 +97,7 @@
 
 (define* (run-job action
                   #:key
+                  action-params
                   (always #f)
                   (channel "sheepdog")
                   (host "127.0.0.1")
@@ -106,7 +107,7 @@
   (catch-all
    (λ ()
      (match action
-       ((? procedure?) (action))
+       ((? procedure?) (action action-params))
        ((or (? list?) (? string?))
         (run-command (make-cmdline-options always action channel tag host port)))
        (_
