@@ -20,45 +20,68 @@
 (define-module (sheepdog actors)
   #:use-module ((redis pubsub) #:select (redis-subscribe
                                          redis-subscribe-read))
-  #:use-module (redis main)
+  #:use-module ((sheepdog bark) #:select (run-job))
+  #:use-module (redis)
   #:use-module (8sync)
   #:use-module (ice-9 format)
+  #:use-module (ice-9 match)
   #:use-module (oop goops)
-  #:export (run-monitor))
+  #:use-module (srfi srfi-71)
+  #:export (run-job-with-monitor))
 
-(define-class <worker> (<actor>)
-  (host #:init-keyword #:host
-        #:init-value "127.0.0.1"
-        #:getter redis-host)
-  (port #:init-keyword #:port
-        #:init-value 6379
-        #:getter redis-port)
-  (channels #:init-keyword #:channels
-            #:init-value '("sheepdog")
-            #:getter redis-channels)
+(define-actor <sheepdog> (<actor>)
+  ((bark bark))
+  (messenger #:init-keyword #:messenger
+             #:getter get-messenger))
+
+(define-actor <messenger> (<actor>)
+  ((send-alert send-alert))
   (procedure #:init-keyword #:procedure
              #:init-value (lambda (x) x)
-             #:getter get-procedure)
-  (actions #:allocation #:each-subclass
-           #:init-thunk (build-actions
-                         (*init* worker-get-message))))
+             #:getter get-procedure))
 
-(define (worker-get-message worker message)
-  (define conn (redis-connect #:host (redis-host worker)
-                              #:port (redis-port worker)))
-  (redis-subscribe conn (redis-channels worker))
-  (while (actor-alive? worker)
-    ((get-procedure worker) (redis-subscribe-read conn))))
+(define (bark sheepdog message params)
+  "If an error occurs, tell the monitor actor to send a notification"
+  (match params
+    ((action host port channel notify?)
+     ;; Start messenger
+     (cond ((equal? (run-job action
+                             #:host host
+                             #:port port
+                             #:channel channel)
+                    0) ;; success
+            (<- (get-messenger sheepdog)
+                'send-alert
+                (list 'success)))
+           (else
+            (<- (get-messenger sheepdog)
+                'send-alert (list host port channel notify?)))))))
 
+(define (send-alert messenger message params)
+  "In case of an error send a notification"
+  (match params
+    (('success)
+     (display "\nWoof!  Sheepdog ran the command successfully!\n"))
+    ((host port channel notify?)
+     (when notify?
+       (let ((conn (redis-connect #:host host #:port port)))
+         ((get-procedure messenger) (redis-send conn
+                                                (rpop `(,(format #f "queue:~a" channel)))))
+         (redis-close conn))))))
 
-(define* (run-monitor #:key (host "127.0.0.1")
-                      (port 6379)
-                      (channels '("sheepdog"))
-                      (procedure (lambda (x) x)))
+(define* (run-job-with-monitor action #:key (host "127.0.0.1")
+                               (port 6379)
+                               (channel "sheepdog")
+                               (notify? #f)
+                               (procedure (lambda (x) x)))
   (let* ((hive (make-hive))
-         (worker (bootstrap-actor hive <worker>
-                                  #:host host
-                                  #:port port
-                                  #:channels channels
-                                  #:procedure procedure)))
-    (run-hive hive '())))
+         (messenger (bootstrap-actor hive <messenger>
+                                     #:procedure procedure))
+         (sheepdog (bootstrap-actor hive <sheepdog>
+                                    #:messenger messenger)))
+    (run-hive hive
+              (list
+               (bootstrap-message hive
+                                  sheepdog
+                                  'bark
+                                  (list action host port channel notify?))))))
