@@ -4,7 +4,10 @@
 (use-modules (ice-9 format)
              (ice-9 match)
              (srfi srfi-1)
+             (srfi srfi-26)
+             (sheepdog actors)
              (sheepdog command)
+             (sheepdog email)
              (sheepdog bark))
 
 (define %program-arguments
@@ -26,6 +29,9 @@
                 (lambda args
                   (show-version)
                   (exit 0)))
+        (option '("enable-email")#f #f
+                (lambda (opt name arg result)
+                  (alist-cons 'email-notification? #t result)))
         (option '(#\h "help") #f #f
                 (lambda args
                   (show-help)
@@ -37,9 +43,14 @@
   (display "Usage: sheepdog [OPTION...]
 Run Sheepdog
   -a, --action                 Command, script, lisp code to run
+  -m, --mail                   Send notification via e-mail in case of an error
   -c, --config=CONFIG_FILE     Configuration Filename
   -v, --version                Display version
   -h, --help                   Display this help
+
+Notifications
+You can choose send a notification via email when running the command.
+  --enable-email               In case of an error enable email notifications
 
 Mandatory or optional arguments to long options are also mandatory or optional
 for any corresponding short options.
@@ -58,6 +69,11 @@ There is NO WARRANTY, to the extent permitted by law.
 
 "))
 
+(define (send-email* error-msg from to subject uri)
+  (define message
+    (compose-message from to #:reply-to from #:text error-msg #:subject subject))
+ (send-email message uri))
+
 (define-command (run-sheepdog . args)
   (synopsis "run the sheepdog command")
   (let* ((opts (args-fold* args %options
@@ -67,17 +83,27 @@ There is NO WARRANTY, to the extent permitted by law.
                            (lambda (op loads) (cons op loads))
                            '()))
          (action (assoc-ref opts 'action))
+         (email-notification? (assoc-ref opts 'email-notification?))
          (conf-file (match (load-config (assoc-ref opts 'config))
                       (((config m ...))
                        m)))
          (redis-conf (assoc-ref conf-file 'redis))
+         (from (assoc-ref conf-file 'mailfrom))
+         (to (assoc-ref conf-file 'mailto))
+         (uri (assoc-ref conf-file 'mailer-uri))
          (host (assoc-ref redis-conf 'host))
          (port (assoc-ref redis-conf 'port)))
     (when (redis-alive? #:host (if host host "127.0.0.1")
                         #:port (if port port 6379))
-      (run-job action
+      ;; should run job as an actor; if an error occurs report to monitor!
+      (apply run-job-with-monitor
+             `(,action
                #:channel "sheepdog"
-               #:host (if host host "127.0.0.1")
-               #:port (if port port 6379)))))
+               #:host ,(if host host "127.0.0.1")
+               #:port ,(if port port 6379)
+               ,@(when email-notification?
+                   '(#:notify? #t))
+               ,@(when email-notification?
+                   `(#:procedure ,(cut send-email* <> from to "SHEEPDOG ERROR ALERT!" uri))))))))
 
 (run-sheepdog %program-arguments)
