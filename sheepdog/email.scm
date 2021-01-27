@@ -116,8 +116,7 @@
                           (file-mime-type "image/jpeg")
                           user-agent
                           (binary-file? #t)
-                          (inline-file? #t)
-                          sign? (gpg-arguments '()))
+                          (inline-file? #t))
   "Compose a message, and return a message object."
   (let* ((mime    (mu-mime-create))
          (message (mu-message-create))
@@ -129,30 +128,12 @@
     (newline body)
     (close-port body)
     (mu-mime-add-part mime message)
-
     (when file
       (attach-file! mime
                     (call-with-input-file file get-bytevector-all)
                     #:file-mime-type file-mime-type
                     #:binary-file? binary-file?
                     #:inline-file? inline-file?))    
-    (when sign?
-      (match-let ((($ <cmd-pipe*> pid output input _)
-                   (pipe-pair `("gpg" "-ab" ,@gpg-arguments))))
-        (let ((body (mu-message-get-port message "r" #t)))
-          (dump-port/convert-newlines body output)
-          (close-port output)
-          (let ((signature (get-bytevector-all input)))
-            (close-port input)
-            (match (waitpid pid)
-              ((_ . 0) #t)
-              ((_ . status) (error "failed to sign message body" status)))
-
-            (attach-file! mime signature
-                          #:file-mime-type "application/pgp-signature"
-                          #:binary-file? #f
-                          #:inline-file? #f)))))
-
     (let ((result (mu-mime-get-message mime)))
       (mu-message-set-header result "From" from)
       (mu-message-set-header result "To" to)
@@ -166,8 +147,6 @@
         (mu-message-set-header result "Reply-To" reply-to))
       (when user-agent
         (mu-message-set-header result "User-Agent" user-agent))
-      (when sign?
-        (set-multipart/signed-content-type! result))
       result)))
 
 (define (set-multipart/signed-content-type! message)
