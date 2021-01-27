@@ -2,6 +2,53 @@
 
 #+TITLE: Hacking sheepdog
 
+* Introduction
+
+Currently sheepdog is a monitoring tool that wraps around a command or scheme
+procedure and sends an e-mail notification if there's an error in STDERR. The
+problem that sheepdog tries to solve is to create a transparent light-weight
+layer for running programs and reporting errors. This is useful when running
+automated programs(say in cron) or when running long-running processes/
+programs. A simple program would look like:
+
+#+begin_src sh
+./pre-inst-env guile bin/sheepdog -c etc/monitor.conf.backup -a "ls" --enable-email
+#+end_src
+
+In addition to using sheepdog as a script, you could alternatively choose to
+use sheepdog as a library:
+
+#+begin_src scheme
+;; Our monitor is display
+,use (sheepdog actors)
+(run-job-with-monitor "ls" #:procedure display)
+
+;; Running a procedure
+
+;; run-job-with-monitor for now can't take in scheme procedures
+,use (sheepdog bark)
+(run-job (lambda (x) x) #:action-params 1)
+#+end_src
+
+* Implementation
+
+Sheepdog currently relies on [[https://www.gnu.org/software/8sync/manual/8sync.html][actor-model]] and REDIS as a message queue. In the
+actor model, you have different actors that communicate with each other by
+passing messages. Actors don't know what other actors will do with said
+message. In sheepdog, we run a command using an actor. Let's call this actor
+"sheepdog". If an error occurs, this actor broadcasts a message in a redis
+channel and adds the error message to a queue in Redis; and thereafter passes
+this error message to another actor, our "messenger". The messenger is
+responsible for sending our messages as alerts, say over e-mail. With time,
+the intent is to give the actors the ability to communicate over a network,
+thereby giving sheepdog the ability to monitor things over a network.
+
+* To-Do/ Ideas
+
+- [ ] Adding a filter--- filter out messages that have certain keywords to
+  avoid spammy text.
+- [ ] Allow option for streaming stdout in a verbose way.
+
 * Contributing
 
 By far the easiest way to hack on sheepdog is to develop using Guix:
