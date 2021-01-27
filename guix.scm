@@ -27,6 +27,7 @@
   (gnu packages autotools)
   (gnu packages guile)
   (gnu packages guile-xyz)
+  (gnu packages mail)
   (gnu packages pkg-config)
   (gnu packages texinfo))
 
@@ -80,6 +81,7 @@
   (propagated-inputs `(("guile-redis" ,my-guile-redis)
                        ("guile-readline" ,guile-readline)
                        ("guile-8sync" ,my-guile-8sync)
+                       ("mailutils" ,mailutils)
                        ("guile-colorized" ,guile-colorized)))
   (synopsis "")
   (description "")
