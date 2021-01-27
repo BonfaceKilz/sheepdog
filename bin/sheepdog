@@ -69,11 +69,6 @@ There is NO WARRANTY, to the extent permitted by law.
 
 "))
 
-(define (send-email* error-msg from to subject uri)
-  (define message
-    (compose-message from to #:reply-to from #:text error-msg #:subject subject))
- (send-email message uri))
-
 (define-command (run-sheepdog . args)
   (synopsis "run the sheepdog command")
   (let* ((opts (args-fold* args %options

@@ -30,7 +30,8 @@
   #:use-module ((web uri) #:select (uri-encode))
   #:export (date->rfc822-string
             compose-message
-            send-email)
+            send-email
+            send-email*)
   #:re-export (mu-debug))
 
 (define (date->rfc822-string date)
@@ -167,3 +168,12 @@
 e.g from smtp that would like: smtp://user:pass@host:port"
   (mu-register-format)  ;; Registers all available formats
   (mu-message-send message uri))
+
+(define (send-email* message from to subject uri)
+  "Send MESSAGE given the right fields."
+  (send-email (compose-message from
+                               to
+                               #:reply-to from
+                               #:text message
+                               #:subject subject)
+              uri))
