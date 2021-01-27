@@ -44,17 +44,25 @@
         (close-port stdin)
         (match (waitpid pid)
           ((_ . 0)
-           (utf8->string results)) ;; success
+           (utf8->string results)
+           0) ;; success
           (( . status)
-           (let ((conn (redis-connect #:host host #:port port)))
+           (let ((conn (redis-connect #:host host #:port port))
+                 (error-msg (match err-msg
+                            ((? bytevector?) (utf8->string err-msg))
+                            (_ err-msg))))
              (redis-publish conn
-                            (string-append channel tag)
-                            (format #f "~a- ~a"
+                            (format #f "~a~a" channel tag)
+                            (format #f "(~a . ~a)"
                                     (strftime "%c" (localtime (current-time)))
-                                    (match err-msg
-                                      ((? bytevector?) (utf8->string err-msg))
-                                      (_ err-msg))))
-             (redis-close conn))))))))
+                                    error-msg))
+             ;; Push the message to a queue
+             (redis-send conn (rpush `(,(format #f "queue:~a" channel)
+                                       ,(format #f "(~a . ~a)"
+                                               (strftime "%c" (localtime (current-time)))
+                                               error-msg))))
+             (redis-close conn)
+             -1)))))))
 
 (define* (redis-alive?
           #:key
