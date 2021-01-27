@@ -30,7 +30,8 @@
   #:use-module ((web uri) #:select (uri-encode))
   #:export (date->rfc822-string
             compose-message
-            send-email))
+            send-email)
+  #:re-export (mu-debug))
 
 (define (date->rfc822-string date)
   "Return a date string like \"Thu, 13 Feb 2020 18:09:31 +0100\" for use in a
